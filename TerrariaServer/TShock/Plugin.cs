@@ -49,8 +49,11 @@ namespace TShock
 		/// <param name="interfaces"></param>
 		public virtual void SetInterfaces(IEnumerable<object> interfaces)
 		{
-			Hooks = GetInterface<IHooks>(interfaces);
-			Game = GetInterface<IGame>(interfaces);
+			if (interfaces != null)
+			{
+				Hooks = GetInterface<IHooks>(interfaces);
+				Game = GetInterface<IGame>(interfaces);
+			}
 		}
 
 		/// <summary>

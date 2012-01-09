@@ -17,16 +17,15 @@ namespace TShock
 		/// </summary>
 		string Name { get; set; }
 
-        /// <summary>
-        /// The IP of the player.
-        /// </summary>
-        string IP { get; set; }
-
-
+		/// <summary>
+		/// The IP of the player.
+		/// </summary>
+		string IP { get; set; }
+		
 		/// <summary>
 		/// Attempts to damage the player.
 		/// </summary>
-		/// <param name="amt">int - how much damage to give</param>
+		/// <param name="amount">int - how much damage to give</param>
 		void Damage(int amount);
 
 		/// <summary>

@@ -3,49 +3,49 @@ using System.Globalization;
 [Serializable]
 public struct Color : IPackedVector<uint>, IPackedVector, IEquatable<Color>
 {
-	private uint packedValue;
+	private uint _packedValue;
 	public byte R
 	{
 		get
 		{
-			return (byte)this.packedValue;
+			return (byte)this._packedValue;
 		}
 		set
 		{
-			this.packedValue = ((this.packedValue & 4294967040u) | (uint)value);
+			this._packedValue = ((this._packedValue & 4294967040u) | (uint)value);
 		}
 	}
 	public byte G
 	{
 		get
 		{
-			return (byte)(this.packedValue >> 8);
+			return (byte)(this._packedValue >> 8);
 		}
 		set
 		{
-			this.packedValue = ((this.packedValue & 4294902015u) | (uint)((uint)value << 8));
+			this._packedValue = ((this._packedValue & 4294902015u) | (uint)((uint)value << 8));
 		}
 	}
 	public byte B
 	{
 		get
 		{
-			return (byte)(this.packedValue >> 16);
+			return (byte)(this._packedValue >> 16);
 		}
 		set
 		{
-			this.packedValue = ((this.packedValue & 4278255615u) | (uint)((uint)value << 16));
+			this._packedValue = ((this._packedValue & 4278255615u) | (uint)((uint)value << 16));
 		}
 	}
 	public byte A
 	{
 		get
 		{
-			return (byte)(this.packedValue >> 24);
+			return (byte)(this._packedValue >> 24);
 		}
 		set
 		{
-			this.packedValue = ((this.packedValue & 16777215u) | (uint)((uint)value << 24));
+			this._packedValue = ((this._packedValue & 16777215u) | (uint)((uint)value << 24));
 		}
 	}
 	[CLSCompliant(false)]
@@ -53,11 +53,11 @@ public struct Color : IPackedVector<uint>, IPackedVector, IEquatable<Color>
 	{
 		get
 		{
-			return this.packedValue;
+			return this._packedValue;
 		}
 		set
 		{
-			this.packedValue = value;
+			this._packedValue = value;
 		}
 	}
 	public static Color Transparent
@@ -1049,7 +1049,7 @@ public struct Color : IPackedVector<uint>, IPackedVector, IEquatable<Color>
 	}
 	private Color(uint packedValue)
 	{
-		this.packedValue = packedValue;
+		this._packedValue = packedValue;
 	}
 	public Color(int r, int g, int b)
 	{
@@ -1061,7 +1061,7 @@ public struct Color : IPackedVector<uint>, IPackedVector, IEquatable<Color>
 		}
 		g <<= 8;
 		b <<= 16;
-		this.packedValue = (uint)(r | g | b | -16777216);
+		this._packedValue = (uint)(r | g | b | -16777216);
 	}
 	public Color(int r, int g, int b, int a)
 	{
@@ -1075,28 +1075,28 @@ public struct Color : IPackedVector<uint>, IPackedVector, IEquatable<Color>
 		g <<= 8;
 		b <<= 16;
 		a <<= 24;
-		this.packedValue = (uint)(r | g | b | a);
+		this._packedValue = (uint)(r | g | b | a);
 	}
 	public Color(float r, float g, float b)
 	{
-		this.packedValue = Color.PackHelper(r, g, b, 1f);
+		this._packedValue = Color.PackHelper(r, g, b, 1f);
 	}
 	public Color(float r, float g, float b, float a)
 	{
-		this.packedValue = Color.PackHelper(r, g, b, a);
+		this._packedValue = Color.PackHelper(r, g, b, a);
 	}
 	public Color(Vector4 vector)
 	{
-		this.packedValue = Color.PackHelper(vector.X, vector.Y, vector.Z, vector.W);
+		this._packedValue = Color.PackHelper(vector.X, vector.Y, vector.Z, vector.W);
 	}
 	void IPackedVector.PackFromVector4(Vector4 vector)
 	{
-		this.packedValue = Color.PackHelper(vector.X, vector.Y, vector.Z, vector.W);
+		this._packedValue = Color.PackHelper(vector.X, vector.Y, vector.Z, vector.W);
 	}
 	public static Color FromNonPremultiplied(Vector4 vector)
 	{
 		Color result;
-		result.packedValue = Color.PackHelper(vector.X * vector.W, vector.Y * vector.W, vector.Z * vector.W, vector.W);
+		result._packedValue = Color.PackHelper(vector.X * vector.W, vector.Y * vector.W, vector.Z * vector.W, vector.W);
 		return result;
 	}
 	public static Color FromNonPremultiplied(int r, int g, int b, int a)
@@ -1109,7 +1109,7 @@ public struct Color : IPackedVector<uint>, IPackedVector, IEquatable<Color>
 		b <<= 16;
 		a <<= 24;
 		Color result;
-		result.packedValue = (uint)(r | g | b | a);
+		result._packedValue = (uint)(r | g | b | a);
 		return result;
 	}
 	private static uint PackHelper(float vectorX, float vectorY, float vectorZ, float vectorW)
@@ -1147,16 +1147,16 @@ public struct Color : IPackedVector<uint>, IPackedVector, IEquatable<Color>
 	public Vector4 ToVector4()
 	{
 		Vector4 result;
-		result.X = PackUtils.UnpackUNorm(255u, this.packedValue);
-		result.Y = PackUtils.UnpackUNorm(255u, this.packedValue >> 8);
-		result.Z = PackUtils.UnpackUNorm(255u, this.packedValue >> 16);
-		result.W = PackUtils.UnpackUNorm(255u, this.packedValue >> 24);
+		result.X = PackUtils.UnpackUNorm(255u, this._packedValue);
+		result.Y = PackUtils.UnpackUNorm(255u, this._packedValue >> 8);
+		result.Z = PackUtils.UnpackUNorm(255u, this._packedValue >> 16);
+		result.W = PackUtils.UnpackUNorm(255u, this._packedValue >> 24);
 		return result;
 	}
 	public static Color Lerp(Color value1, Color value2, float amount)
 	{
-		uint num = value1.packedValue;
-		uint num2 = value2.packedValue;
+		uint num = value1._packedValue;
+		uint num2 = value2._packedValue;
 		int num3 = (int)((byte)num);
 		int num4 = (int)((byte)(num >> 8));
 		int num5 = (int)((byte)(num >> 16));
@@ -1171,12 +1171,12 @@ public struct Color : IPackedVector<uint>, IPackedVector, IEquatable<Color>
 		int num14 = num5 + ((num9 - num5) * num11 >> 16);
 		int num15 = num6 + ((num10 - num6) * num11 >> 16);
 		Color result;
-		result.packedValue = (uint)(num12 | num13 << 8 | num14 << 16 | num15 << 24);
+		result._packedValue = (uint)(num12 | num13 << 8 | num14 << 16 | num15 << 24);
 		return result;
 	}
 	public static Color Multiply(Color value, float scale)
 	{
-		uint num = value.packedValue;
+		uint num = value._packedValue;
 		uint num2 = (uint)((byte)num);
 		uint num3 = (uint)((byte)(num >> 8));
 		uint num4 = (uint)((byte)(num >> 16));
@@ -1219,12 +1219,12 @@ public struct Color : IPackedVector<uint>, IPackedVector, IEquatable<Color>
 			num5 = 255u;
 		}
 		Color result;
-		result.packedValue = (num2 | num3 << 8 | num4 << 16 | num5 << 24);
+		result._packedValue = (num2 | num3 << 8 | num4 << 16 | num5 << 24);
 		return result;
 	}
 	public static Color operator *(Color value, float scale)
 	{
-		uint num = value.packedValue;
+		uint num = value._packedValue;
 		uint num2 = (uint)((byte)num);
 		uint num3 = (uint)((byte)(num >> 8));
 		uint num4 = (uint)((byte)(num >> 16));
@@ -1267,7 +1267,7 @@ public struct Color : IPackedVector<uint>, IPackedVector, IEquatable<Color>
 			num5 = 255u;
 		}
 		Color result;
-		result.packedValue = (num2 | num3 << 8 | num4 << 16 | num5 << 24);
+		result._packedValue = (num2 | num3 << 8 | num4 << 16 | num5 << 24);
 		return result;
 	}
 	public override string ToString()
@@ -1282,7 +1282,7 @@ public struct Color : IPackedVector<uint>, IPackedVector, IEquatable<Color>
 	}
 	public override int GetHashCode()
 	{
-		return this.packedValue.GetHashCode();
+		return this._packedValue.GetHashCode();
 	}
 	public override bool Equals(object obj)
 	{
@@ -1290,7 +1290,7 @@ public struct Color : IPackedVector<uint>, IPackedVector, IEquatable<Color>
 	}
 	public bool Equals(Color other)
 	{
-		return this.packedValue.Equals(other.packedValue);
+		return this._packedValue.Equals(other._packedValue);
 	}
 	public static bool operator ==(Color a, Color b)
 	{

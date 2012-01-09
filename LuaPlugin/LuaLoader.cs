@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using System.ComponentModel;
 using LuaInterface;
 using TShock;
 using TShock.Hooks;
-using TShock.Hooks.Player;
 
 namespace LuaPlugin
 {
@@ -17,13 +12,13 @@ namespace LuaPlugin
 		private readonly Lua _lua = null;
 		public string LuaPath = "";
 		public string LuaAutorunPath = "";
-		IGame Game;
-		IHooks Hooks;
+		readonly IGame _game;
+		readonly IHooks _hooks;
 		public LuaLoader(string path, IGame game, IHooks hooks)
 		{
 			_lua = new Lua();
-			Game = game;
-			Hooks = hooks;
+			_game = game;
+			_hooks = hooks;
 			LuaPath = path;
 			LuaAutorunPath = Path.Combine(LuaPath, "autorun");
 			SendLuaDebugMsg("Lua 5.1 (serverside) initialized.");
@@ -92,32 +87,32 @@ namespace LuaPlugin
 
 		public void RegisterLuaFunctions()
 		{
-			_lua["Hooks"] = Hooks;
-			_lua["Game"] = Game;
+			_lua["Hooks"] = _hooks;
+			_lua["Game"] = _game;
 			_lua["Color"] = new Color();			
 
 			//More Lua Functions
-			LuaFunctions LuaFuncs = new LuaFunctions(this);
-			var LuaFuncMethods = LuaFuncs.GetType().GetMethods();
-			foreach (System.Reflection.MethodInfo method in LuaFuncMethods)
+			var luaFuncs = new LuaFunctions(this);
+			var luaFuncMethods = luaFuncs.GetType().GetMethods();
+			foreach (var method in luaFuncMethods)
 			{
-				_lua.RegisterFunction(method.Name, LuaFuncs, method);
+				_lua.RegisterFunction(method.Name, luaFuncs, method);
 			}
 		}
 	}
 
 	internal class LuaFunctions
 	{
-		LuaLoader Parent;
+		LuaLoader _parent;
 		public LuaFunctions(LuaLoader parent)
 		{
-			Parent = parent;
+			_parent = parent;
 		}
 
 		[Description("Prints a message to the console from the Lua debugger.")]
 		public void Print(string s)
 		{
-			ConsoleColor previousColor = Console.ForegroundColor;
+			var previousColor = Console.ForegroundColor;
 			Console.ForegroundColor = ConsoleColor.Cyan;
 			Console.WriteLine(s);
 			Console.ForegroundColor = previousColor;
