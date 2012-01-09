@@ -14,7 +14,7 @@ namespace TShock.Hooks.Game
 			Update = new HandlerList<HandledEventArgs>();
 			PostUpdate = new HandlerList<HandledEventArgs>();
 			Initialize = new HandlerList<HandledEventArgs>();
-			PostUpdate = new HandlerList<HandledEventArgs>();
+			PostInitialize = new HandlerList<HandledEventArgs>();
 
 			TerrariaServer.Hooks.GameHooks.Update += GameHooks_Update;
 			TerrariaServer.Hooks.GameHooks.PostUpdate += GameHooks_PostUpdate;
