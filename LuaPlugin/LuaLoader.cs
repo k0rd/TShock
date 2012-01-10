@@ -89,7 +89,7 @@ namespace LuaPlugin
 		{
 			_lua["Hooks"] = _hooks;
 			_lua["Game"] = _game;
-			_lua["Color"] = new Color();			
+			_lua["Color"] = new Color();
 
 			//More Lua Functions
 			var luaFuncs = new LuaFunctions(this);
@@ -116,6 +116,11 @@ namespace LuaPlugin
 			Console.ForegroundColor = ConsoleColor.Cyan;
 			Console.WriteLine(s);
 			Console.ForegroundColor = previousColor;
+		}
+
+		public void AddCommand(CommandDelegate del, string name)
+		{
+			TShock.Commands.ChatCommands.Add(new Command(del, name));
 		}
 	}
 }
