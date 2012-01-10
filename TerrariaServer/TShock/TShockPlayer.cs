@@ -47,5 +47,11 @@ namespace TShock
 				color = Color.White;
 			NetMessage.SendData((int) PacketTypes.ChatText, Id, -1, msg, 0xFF, color.R, color.B, color.G);
 		}
+
+		public void SendMessage(string msg)
+		{
+			var color = Color.White;
+			NetMessage.SendData((int)PacketTypes.ChatText, Id, -1, msg, 0xFF, color.R, color.B, color.G);
+		}
 	}
 }

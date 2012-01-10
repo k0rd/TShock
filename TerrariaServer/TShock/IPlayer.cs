@@ -34,5 +34,11 @@ namespace TShock
 		/// <param name="msg">string - text to send</param>
 		/// <param name="color">Color - color for the text</param>
 		void SendMessage(string msg, Color color = default(Color));
+
+		/// <summary>
+		/// Sends message to specified player
+		/// </summary>
+		/// <param name="msg">string - text to send</param>
+		void SendMessage(string msg);
 	}
 }

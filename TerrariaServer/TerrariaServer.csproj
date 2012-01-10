@@ -39,7 +39,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>..\Build\TerrariaServer.XML</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -78,6 +79,7 @@
     <Compile Include="Hooks\ProjectileHooks.cs" />
     <Compile Include="Hooks\ServerHooks.cs" />
     <Compile Include="Hooks\WorldHooks.cs" />
+    <Compile Include="TShock\CommandHandler.cs" />
     <Compile Include="TShock\Hooks\Game\GameHooks.cs" />
     <Compile Include="TShock\Hooks\NPC\NpcEventArgs.cs" />
     <Compile Include="TShock\Hooks\NPC\NpcHooks.cs" />

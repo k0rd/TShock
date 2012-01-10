@@ -126,12 +126,12 @@ namespace Terraria
                 if (Netplay.serverSock[whoAmI].state == 0)
                 {
                     string @string = Encoding.ASCII.GetString(readBuffer, start + 1, length - 1);
-                    if (!(@string == "Terraria" + Main.curRelease))
+                    if (@string != "Terraria" + Main.curRelease)
                     {
                         NetMessage.SendData(2, whoAmI, -1, "You are not using the same version as this server.", 0, 0f, 0f, 0f, 0);
                         return;
                     }
-                    if (Netplay.password == null || Netplay.password == "")
+                    if (string.IsNullOrEmpty(Netplay.password))
                     {
                         Netplay.serverSock[whoAmI].state = 1;
                         NetMessage.SendData(3, whoAmI, -1, "", 0, 0f, 0f, 0f, 0);
@@ -854,12 +854,8 @@ namespace Terraria
                                                                         byte b8 = readBuffer[num];
                                                                         num++;
                                                                         int num31 = readBuffer[num];
-                                                                        bool flag4 = false;
-                                                                        if (b8 == 1)
-                                                                        {
-                                                                            flag4 = true;
-                                                                        }
-                                                                        if (Main.netMode == 2)
+                                                                    	bool flag4 = b8 == 1;
+                                                                    	if (Main.netMode == 2)
                                                                         {
                                                                             if (!flag4)
                                                                             {
@@ -1149,12 +1145,8 @@ namespace Terraria
                                                                                             }
                                                                                             else
                                                                                             {
-                                                                                                bool flag5 = false;
-                                                                                                if (num41 == 200)
-                                                                                                {
-                                                                                                    flag5 = true;
-                                                                                                }
-                                                                                                if (flag5)
+                                                                                            	bool flag5 = num41 == 200;
+                                                                                            	if (flag5)
                                                                                                 {
                                                                                                     var item = new Item();
                                                                                                     item.netDefaults(num44);
@@ -1194,14 +1186,7 @@ namespace Terraria
                                                                                                 return;
                                                                                             }
                                                                                             Main.item[num45].owner = b13;
-                                                                                            if (b13 == Main.myPlayer)
-                                                                                            {
-                                                                                                Main.item[num45].keepTime = 15;
-                                                                                            }
-                                                                                            else
-                                                                                            {
-                                                                                                Main.item[num45].keepTime = 0;
-                                                                                            }
+                                                                                            Main.item[num45].keepTime = b13 == Main.myPlayer ? 15 : 0;
                                                                                             if (Main.netMode == 2)
                                                                                             {
                                                                                                 Main.item[num45].owner = 255;
@@ -1945,12 +1930,8 @@ namespace Terraria
                                                                                                                                                                         byte b29 = readBuffer[num];
                                                                                                                                                                         num++;
                                                                                                                                                                         string string6 = Encoding.ASCII.GetString(readBuffer, num, length - num + start);
-                                                                                                                                                                        bool pvp2 = false;
-                                                                                                                                                                        if (b29 != 0)
-                                                                                                                                                                        {
-                                                                                                                                                                            pvp2 = true;
-                                                                                                                                                                        }
-                                                                                                                                                                        Main.player[b28].KillMe(num90, num89, pvp2, string6);
+                                                                                                                                                                    	bool pvp2 = b29 != 0;
+                                                                                                                                                                    	Main.player[b28].KillMe(num90, num89, pvp2, string6);
                                                                                                                                                                         if (Main.netMode == 2)
                                                                                                                                                                         {
                                                                                                                                                                             NetMessage.SendData(44, -1, whoAmI, string6, b28, num89, num90, b29, 0);
@@ -2335,12 +2316,8 @@ namespace Terraria
                                                                                                                                                                                                                                     num += 2;
                                                                                                                                                                                                                                     byte b37 = readBuffer[num];
                                                                                                                                                                                                                                     num++;
-                                                                                                                                                                                                                                    bool homeless = false;
-                                                                                                                                                                                                                                    if (b37 == 1)
-                                                                                                                                                                                                                                    {
-                                                                                                                                                                                                                                        homeless = true;
-                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                    if (Main.netMode == 1)
+                                                                                                                                                                                                                                	bool homeless = b37 == 1;
+                                                                                                                                                                                                                                	if (Main.netMode == 1)
                                                                                                                                                                                                                                     {
                                                                                                                                                                                                                                         Main.npc[num118].homeless = homeless;
                                                                                                                                                                                                                                         Main.npc[num118].homeTileX = num119;
