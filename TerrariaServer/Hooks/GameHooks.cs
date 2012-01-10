@@ -9,8 +9,11 @@ namespace TerrariaServer.Hooks
 	public static class GameHooks
 	{
 		public delegate void UpdateD(HandledEventArgs e);
+
 		public delegate void PostUpdateD(HandledEventArgs e);
+
 		public delegate void InitializeD(HandledEventArgs e);
+
 		public delegate void PostInitializeD(HandledEventArgs e);
 
 		public static event UpdateD Update;
@@ -36,6 +39,7 @@ namespace TerrariaServer.Hooks
 				}
 			}
 		}
+
 		public static void OnInitialize(bool pre)
 		{
 			if (pre)

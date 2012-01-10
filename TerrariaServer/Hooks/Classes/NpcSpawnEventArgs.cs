@@ -3,12 +3,8 @@ using Terraria;
 
 namespace TerrariaServer.Hooks.Classes
 {
-    public class NpcSpawnEventArgs : HandledEventArgs
-    {
-        public NPC Npc
-        {
-            get;
-            set;
-        }
-    }
+	public class NpcSpawnEventArgs : HandledEventArgs
+	{
+		public NPC Npc { get; set; }
+	}
 }
