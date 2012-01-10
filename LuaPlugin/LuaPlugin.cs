@@ -41,7 +41,6 @@ namespace LuaPlugin
 
 		public override void Initialize()
 		{
-			var t = Hooks;
 			_luaLoader = new LuaLoader(Path.Combine(".", "lua"), Game, Hooks);
 		}
 	}

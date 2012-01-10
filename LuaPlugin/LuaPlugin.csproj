@@ -21,8 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>
-    </DocumentationFile>
+    <DocumentationFile>..\Build\Plugins\LuaPlugin.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -47,6 +46,10 @@
     <Reference Include="TerrariaServer">
       <HintPath>..\Build\TerrariaServer.exe</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="TShockCore, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Build\Plugins\TShockCore.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

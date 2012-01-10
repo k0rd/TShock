@@ -4,12 +4,13 @@ using System.ComponentModel;
 using LuaInterface;
 using TShock;
 using TShock.Hooks;
+using TShockCore;
 
 namespace LuaPlugin
 {
 	internal class LuaLoader
 	{
-		private readonly Lua _lua = null;
+		private readonly Lua _lua;
 		public string LuaPath = "";
 		public string LuaAutorunPath = "";
 		readonly IGame _game;
@@ -90,6 +91,7 @@ namespace LuaPlugin
 			_lua["Hooks"] = _hooks;
 			_lua["Game"] = _game;
 			_lua["Color"] = new Color();
+			_lua["ConfigType"] = new ConfigType();
 
 			//More Lua Functions
 			var luaFuncs = new LuaFunctions(this);
@@ -103,7 +105,8 @@ namespace LuaPlugin
 
 	internal class LuaFunctions
 	{
-		LuaLoader _parent;
+		private LuaLoader _parent;
+
 		public LuaFunctions(LuaLoader parent)
 		{
 			_parent = parent;
@@ -120,7 +123,19 @@ namespace LuaPlugin
 
 		public void AddCommand(CommandDelegate del, string name)
 		{
-			TShock.Commands.ChatCommands.Add(new Command(del, name));
+			Commands.ChatCommands.Add(new Command(del, name));
+		}
+
+		public IConfig CreateConfig(string file, ConfigType type)
+		{
+			switch (type)
+			{
+				case ConfigType.XML:
+					return new XMLConfig(file);
+				case ConfigType.Json:
+					return new JsonConfig(file);
+			}
+			return null;
 		}
 	}
 }
