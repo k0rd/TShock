@@ -4,7 +4,7 @@ using System.ComponentModel;
 using LuaInterface;
 using TShock;
 using TShock.Hooks;
-using TShockCore;
+using TShockCore.Config;
 
 namespace LuaPlugin
 {

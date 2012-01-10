@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Xml;
-using System.Xml.Serialization;
-using TShockCore;
+using Newtonsoft.Json;
+using System.Linq;
+using System.Text;
 
-namespace TShockCore
+namespace TShockCore.Config
 {
-	public class XMLConfig : IConfig
+	public class JsonConfig : IConfig
 	{
-		private List<Member> _members = new List<Member>();
+		private Dictionary<string, object> _members = new Dictionary<string, object>();
 		private readonly string _file;
 
-		public XMLConfig(string file)
+		public JsonConfig(string file)
 		{
 			_file = file;
 		}
@@ -21,18 +21,8 @@ namespace TShockCore
 		{
 			try
 			{
-				var xmlSerializer = new XmlSerializer(typeof (List<Member>));
 				using (var sr = new StreamReader(_file))
-				{
-					var deserialize = xmlSerializer.Deserialize(sr);
-					_members = (List<Member>) deserialize;
-				}
-				return true;
-			}
-			catch (FileNotFoundException e)
-			{
-				//File was just created, it's ok :)
-				return false;
+					_members = JsonConvert.DeserializeObject<Dictionary<string, object>>(sr.ReadToEnd());
 			}
 			catch (Exception e)
 			{
@@ -41,27 +31,32 @@ namespace TShockCore
 				Console.ResetColor();
 				return false;
 			}
+			return true;
 		}
 
 		public bool Write()
 		{
 			try
 			{
-				var xmlSerializer = new XmlSerializer(typeof(List<Member>));
+				var str = JsonConvert.SerializeObject(_members, Formatting.Indented);
 				using (var sw = new StreamWriter(_file, false))
-					xmlSerializer.Serialize(sw, _members);
-				return true;
+					sw.Write(str);
 			}
 			catch (Exception e)
 			{
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.WriteLine(e.Message);
+				Console.ResetColor();
 				return false;
 			}
+			return true;
 		}
 
 		public void AddMember(string key, object o)
 		{
-			if (_members.Find(k => k.Key == key) == null)
-				_members.Add(new Member() {Item = o, Key = key});
+			object ob;
+			if (!_members.TryGetValue(key, out ob))
+				_members.Add(key, o);
 			else
 			{
 				Console.ForegroundColor = ConsoleColor.Yellow;
@@ -73,14 +68,20 @@ namespace TShockCore
 		public object ReadMember(string key)
 		{
 			object o;
-			return _members.Find(k => k.Key == key);
+			_members.TryGetValue(key, out o);
+			return o;
 		}
 
 		public void EditMember(string key, object o)
 		{
-			Member m;
-			if ((m = _members.Find(k => k.Key == key)) != null)
-				m.Item = o;
+			object ob;
+			if (_members.TryGetValue(key, out ob))
+			{
+				_members.Remove(key);
+				_members.Add(key, o);
+			}
+			else
+				_members.Add(key, o);
 		}
 	}
 }
