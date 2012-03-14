@@ -40,14 +40,12 @@ namespace TShockAPI
 	[APIVersion(1, 11)]
 	public class TShock : TerrariaPlugin
 	{
-		private const string LogFormatDefault = "yyyyMMddHHmmss";
-		private static string LogFormat = LogFormatDefault;
 		private static bool LogClear = false;
 		public static readonly Version VersionNum = Assembly.GetExecutingAssembly().GetName().Version;
 		public static readonly string VersionCodename = "Squashing bugs, and adding suggestions";
 
 		public static string SavePath = "tshock";
-
+		public static string logFilename= Path.Combine(SavePath, "log.txt");
 		public static TSPlayer[] Players = new TSPlayer[Main.maxPlayers];
 		public static BanManager Bans;
 		public static WarpManager Warps;
@@ -67,6 +65,7 @@ namespace TShockAPI
 		public static RestManager RestManager;
 		public static Utils Utils = Utils.Instance;
 		public static StatTracker StatTracker = new StatTracker();
+		public static int logTicker=0;
 		/// <summary>
 		/// Used for implementing REST Tokens prior to the REST system starting up.
 		/// </summary>
@@ -114,17 +113,6 @@ namespace TShockAPI
 			if (!Directory.Exists(SavePath))
 				Directory.CreateDirectory(SavePath);
 
-			DateTime now = DateTime.Now;
-			string logFilename;
-			try
-			{
-				logFilename = Path.Combine(SavePath, now.ToString(LogFormat)+".log");
-			}
-			catch(Exception)
-			{
-				// Problem with the log format use the default
-				logFilename = Path.Combine(SavePath, now.ToString(LogFormatDefault) + ".log");
-			}
 #if DEBUG
 			Log.Initialize(logFilename, LogLevel.All, false);
 #else
@@ -373,13 +361,6 @@ namespace TShockAPI
 						Permissions.DumpDescriptions();
 						break;
 
-					case "-logformat":
-						LogFormat = parms[++i];
-						break;
-
-					case "-logclear":
-						bool.TryParse(parms[++i], out LogClear);
-						break;
 				}
 			}
 		}
@@ -615,6 +596,33 @@ namespace TShockAPI
 				}
 			}
 			SetConsoleTitle();
+			logTicker++;
+			if (logTicker > 299)
+			{
+			   logTicker=0;
+			   try{
+				FileInfo m_f= new FileInfo(logFilename);
+				long f_size=m_f.Length;
+				f_size= f_size / 1024;
+				int r_size=(int) f_size;
+				if ( r_size >Config.MaxLogSize ){
+				   string backupLogname=Path.Combine(SavePath,DateTime.Now.ToString("yyMMddHHmmss")+".log.txt");
+				   Log.Dispose();
+				   File.Move(logFilename, backupLogname);
+
+#if DEBUG
+					Log.Initialize(logFilename, LogLevel.All, false);
+#else
+					Log.Initialize(logFilename, LogLevel.All & ~LogLevel.Debug, LogClear);
+#endif
+				}
+			      }
+			      catch (Exception f_err)
+			      {
+			      Console.WriteLine(string.Format("There was a problem rotating the logfile : {0}",f_err.ToString()));
+			      }
+			}
+
 		}
 
 		private void SetConsoleTitle()

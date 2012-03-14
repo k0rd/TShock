@@ -67,6 +67,8 @@ namespace TShockAPI
 
 		[Description("How long backups are kept in minutes. 2880 = 2 days.")] public int BackupKeepFor = 60;
 
+		[Description("Maximum log size, in KB, before rotating the logfile.")] public int MaxLogSize = 1024;
+
 		[Description(
 			"Remembers where a player left off. It works by remembering the IP, NOT the character.  \neg. When you try to disconnect, and reconnect to be automatically placed at spawn, you'll be at your last location. Note: Won't save after server restarts."
 			)] public bool RememberLeavePos;
@@ -151,7 +153,7 @@ namespace TShockAPI
 
 		[Description("Enable Server Side Inventory checks, EXPERIMENTAL")] public bool ServerSideInventory;
 
-        [Description("How often SSI should save, in minutes")] public int ServerSideInventorySave = 15;
+        	[Description("How often SSI should save, in minutes")] public int ServerSideInventorySave = 15;
 
 		[Description("Time, in milliseconds, to disallow discarding items after logging in when ServerSideInventory is ON")] public int LogonDiscardThreshold=250;
 		
