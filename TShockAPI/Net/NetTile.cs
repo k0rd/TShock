@@ -26,18 +26,37 @@ namespace TShockAPI.Net
 	public class NetTile : IPackable
 	{
 		public bool Active { get; set; }
-		public byte Type { get; set; }
+		public ushort Type { get; set; }
 		public short FrameX { get; set; }
 		public short FrameY { get; set; }
+		public bool Lighted { get; set; }
 		public byte Wall { get; set; }
 		public byte Liquid { get; set; }
 		public byte LiquidType { get; set; }
 		public bool Wire { get; set; }
+		public bool Wire2 { get; set; }
+		public bool Wire3 { get; set; }
 		public byte HalfBrick { get; set; }
 		public byte Actuator { get; set; }
 		public bool Inactive { get; set; }
 		public bool IsHalf { get; set; }
 		public bool IsActuator { get; set; }
+		public byte TileColor { get; set; }
+		public byte WallColor { get; set; }
+		public bool Slope { get; set; }
+		public bool Slope2 { get; set; }
+		public bool Slope3 { get; set; }
+
+	public bool HasColor
+		{
+			get { return TileColor > 0; }
+		}
+
+		public bool HasWallColor
+		{
+			get { return WallColor > 0; }
+		}
+
 		public bool HasWall
 		{
 			get { return Wall > 0; }
@@ -62,9 +81,16 @@ namespace TShockAPI.Net
 			Wall = 0;
 			Liquid = 0;
 			Wire = false;
+			Wire2 = false;
+			Wire3 = false;
 			HalfBrick = 0;
 			Actuator = 0;
 			Inactive = false;
+			TileColor = 0;
+			WallColor = 0;
+			Lighted = false;
+			Slope = false;
+			Slope2 = false;
 		}
 
 		public NetTile(Stream stream)
@@ -75,36 +101,72 @@ namespace TShockAPI.Net
 
 		public void Pack(Stream stream)
 		{
-			var flags = TileFlags.None;
+			var bits = new BitsByte();
 
 			if ((Active) && (!Inactive))
-				flags |= TileFlags.Active;
+				bits[0] = true;
 
 			if (HasWall)
-				flags |= TileFlags.Wall;
+				bits[2] = true;
 
 			if (HasLiquid)
-				flags |= TileFlags.Liquid;
+				bits[3] = true;
 
 			if (Wire)
-				flags |= TileFlags.Wire;
+				bits[4] = true;
 			
 			if (IsHalf)
-				flags |= TileFlags.HalfBrick;
+				bits[5] = true;
 
 			if (IsActuator)
-				flags |= TileFlags.Actuator;
+				bits[6] = true;
 
 			if (Inactive)
 			{
-				flags |= TileFlags.Inactive;
+				bits[7] = true;
 			}
 
-			stream.WriteInt8((byte) flags);
+			stream.WriteInt8((byte) bits);
+
+			bits = new BitsByte();
+
+			if ((Wire2))
+				bits[0] = true;
+
+			if (Wire3)
+				bits[1] = true;
+
+			if (HasColor)
+				bits[2] = true;
+
+			if (HasWallColor)
+				bits[3] = true;
+
+			if (Slope)
+				bits[4] = true;
+
+			if (Slope2)
+				bits[5] = true;
+
+			if (Slope3)
+				bits[6] = true;
+
+
+			stream.WriteInt8((byte)bits);
+
+			if (HasColor)
+			{
+				stream.WriteByte(TileColor);
+			}
+
+			if (HasWallColor)
+			{
+				stream.WriteByte(WallColor);
+			}
 
 			if (Active)
 			{
-				stream.WriteInt8(Type);
+				stream.WriteInt16((short)Type);
 				if (FrameImportant)
 				{
 					stream.WriteInt16(FrameX);
@@ -124,12 +186,29 @@ namespace TShockAPI.Net
 
 		public void Unpack(Stream stream)
 		{
-			var flags = (TileFlags) stream.ReadInt8();
+			var flags = (BitsByte) stream.ReadInt8();
+			var flags2 = (BitsByte)stream.ReadInt8();
 
-			Active = flags.HasFlag(TileFlags.Active);
+			Wire2 = flags2[0];
+			Wire3 = flags2[1];
+			Slope = flags2[4];
+			Slope2 = flags2[5];
+			Slope3 = flags2[6];
+
+			if (flags2[2])
+			{
+				TileColor = stream.ReadInt8();
+			}
+
+			if (flags2[3])
+			{
+				WallColor = stream.ReadInt8();
+			}
+
+			Active = flags[0];
 			if (Active)
 			{
-				Type = stream.ReadInt8();
+				Type = stream.ReadUInt16();
 				if (FrameImportant)
 				{
 					FrameX = stream.ReadInt16();
@@ -137,45 +216,31 @@ namespace TShockAPI.Net
 				}
 			}
 
-			if (flags.HasFlag(TileFlags.Wall))
+			if (flags[2])
 			{
 				Wall = stream.ReadInt8();
 			}
 
-			if (flags.HasFlag(TileFlags.Liquid))
+			if (flags[3])
 			{
 				Liquid = stream.ReadInt8();
 				LiquidType = stream.ReadInt8();
 			}
 
-			if (flags.HasFlag(TileFlags.Wire))
+			if (flags[4])
 				Wire = true;
 
-			if (flags.HasFlag(TileFlags.HalfBrick))
+			if (flags[5])
 				IsHalf = true;
 			
-			if (flags.HasFlag(TileFlags.Actuator))
+			if (flags[6])
 				IsActuator = true;
 
-			if (flags.HasFlag(TileFlags.Inactive))
+			if (flags[7])
 			{
 				Inactive = true;
 				Active = false;
 			}
 		}
-	}
-
-	[Flags]
-	public enum TileFlags : byte
-	{
-		None = 0,
-		Active = 1,
-		Lighted = 2,
-		Wall = 4,
-		Liquid = 8,
-		Wire = 16,
-		HalfBrick = 32,
-		Actuator = 64,
-		Inactive = 128
 	}
 }

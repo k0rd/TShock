@@ -24,6 +24,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using Terraria;
 using TShockAPI.DB;
 
@@ -258,7 +259,7 @@ namespace TShockAPI
 				return found;
 
 			byte plrID;
-			if (byte.TryParse(plr, out plrID))
+			if (byte.TryParse(plr, out plrID) && plrID < Main.maxPlayers)
 			{
 				TSPlayer player = TShock.Players[plrID];
 				if (player != null && player.Active)
@@ -307,11 +308,11 @@ namespace TShockAPI
 				tileX = startTileX + Random.Next(tileXRange*-1, tileXRange);
 				tileY = startTileY + Random.Next(tileYRange*-1, tileYRange);
 				j++;
-			} while (TilePlacementValid(tileX, tileY) && !TileClear(tileX, tileY));
+			} while (TilePlacementValid(tileX, tileY) && TileSolid(tileX, tileY));
 		}
 
 		/// <summary>
-		/// Determines if a tile is valid
+		/// Determines if a tile is valid.
 		/// </summary>
 		/// <param name="tileX">Location X</param>
 		/// <param name="tileY">Location Y</param>
@@ -322,14 +323,16 @@ namespace TShockAPI
 		}
 
 		/// <summary>
-		/// Checks to see if the tile is clear.
+		/// Checks if the tile is solid.
 		/// </summary>
 		/// <param name="tileX">Location X</param>
 		/// <param name="tileY">Location Y</param>
-		/// <returns>The state of the tile</returns>
-		private bool TileClear(int tileX, int tileY)
+		/// <returns>The tile's solidity.</returns>
+		public bool TileSolid(int tileX, int tileY)
 		{
-			return !Main.tile[tileX, tileY].active();
+			return TilePlacementValid(tileX, tileY) && Main.tile[tileX, tileY] != null &&
+				Main.tile[tileX, tileY].active() && Main.tileSolid[Main.tile[tileX, tileY].type] &&
+				!Main.tile[tileX, tileY].inActive() && !Main.tile[tileX, tileY].halfBrick() && Main.tile[tileX, tileY].slope() == 0;
 		}
 
 		/// <summary>
@@ -439,7 +442,7 @@ namespace TShockAPI
 		/// <returns>name</returns>
 		public string GetBuffName(int id)
 		{
-			return (id > 0 && id < Main.maxBuffs) ? Main.buffName[id] : "null";
+			return (id > 0 && id < Main.maxBuffTypes) ? Main.buffName[id] : "null";
 		}
 
 		/// <summary>
@@ -449,7 +452,7 @@ namespace TShockAPI
 		/// <returns>description</returns>
 		public string GetBuffDescription(int id)
 		{
-			return (id > 0 && id < Main.maxBuffs) ? Main.buffTip[id] : "null";
+			return (id > 0 && id < Main.maxBuffTypes) ? Main.buffTip[id] : "null";
 		}
 
 		/// <summary>
@@ -460,13 +463,13 @@ namespace TShockAPI
 		public List<int> GetBuffByName(string name)
 		{
 			string nameLower = name.ToLower();
-			for (int i = 1; i < Main.maxBuffs; i++)
+			for (int i = 1; i < Main.maxBuffTypes; i++)
 			{
 				if (Main.buffName[i].ToLower() == nameLower)
 					return new List<int> {i};
 			}
 			var found = new List<int>();
-			for (int i = 1; i < Main.maxBuffs; i++)
+			for (int i = 1; i < Main.maxBuffTypes; i++)
 			{
 				if (Main.buffName[i].ToLower().StartsWith(nameLower))
 					found.Add(i);
@@ -571,10 +574,10 @@ namespace TShockAPI
 		/// <param name="reason">string reason (default: "Server shutting down!")</param>
 		public void RestartServer(bool save = true, string reason = "Server shutting down!")
 		{
-			if (TShock.Config.ServerSideInventory)
+			if (TShock.Config.ServerSideCharacter)
 				foreach (TSPlayer player in TShock.Players)
 					if (player != null && player.IsLoggedIn && !player.IgnoreActionsForClearingTrashCan)
-						TShock.InventoryDB.InsertPlayerData(player);
+						TShock.CharacterDB.InsertPlayerData(player);
 
 			StopServer(true, reason);
 			System.Diagnostics.Process.Start(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase);
@@ -589,7 +592,8 @@ namespace TShockAPI
 			FileTools.SetupConfig();
 			TShock.HandleCommandLinePostConfigLoad(Environment.GetCommandLineArgs());
 			TShock.Groups.LoadPermisions();
-			TShock.Regions.ReloadAllRegions();
+			TShock.Regions.Reload();
+			TShock.Itembans.UpdateItemBans();
 			Hooks.GeneralHooks.OnReloadEvent(player);
 		}
 
@@ -636,16 +640,16 @@ namespace TShockAPI
 				string playerName = player.Name;
 				player.SilentKickInProgress = silent;
                 if (player.IsLoggedIn && saveSSI)
-                    player.SaveServerInventory();
+                    player.SaveServerCharacter();
 				player.Disconnect(string.Format("Kicked: {0}", reason));
-				Log.ConsoleInfo(string.Format("Kicked {0} for : {1}", playerName, reason));
+				Log.ConsoleInfo(string.Format("Kicked {0} for : '{1}'", playerName, reason));
 				string verb = force ? "force " : "";
                 if (!silent)
                 {
                     if (string.IsNullOrWhiteSpace(adminUserName))
-                        Broadcast(string.Format("{0} was {1}kicked for {2}", playerName, verb, reason.ToLower()), Color.Green);
+                        Broadcast(string.Format("{0} was {1}kicked for '{2}'", playerName, verb, reason.ToLower()), Color.Green);
                     else
-						Broadcast(string.Format("{0} {1}kicked {2} for {3}", adminUserName, verb, playerName, reason.ToLower()), Color.Green);
+						Broadcast(string.Format("{0} {1}kicked {2} for '{3}'", adminUserName, verb, playerName, reason.ToLower()), Color.Green);
                 }
 				return true;
 			}
@@ -673,15 +677,16 @@ namespace TShockAPI
 			if (force || !player.Group.HasPermission(Permissions.immunetoban))
 			{
 				string ip = player.IP;
+				string uuid = player.UUID;
 				string playerName = player.Name;
-				TShock.Bans.AddBan(ip, playerName, reason, false, adminUserName);
+				TShock.Bans.AddBan(ip, playerName, uuid, reason, false, adminUserName);
 				player.Disconnect(string.Format("Banned: {0}", reason));
-				Log.ConsoleInfo(string.Format("Banned {0} for : {1}", playerName, reason));
+				Log.ConsoleInfo(string.Format("Banned {0} for : '{1}'", playerName, reason));
 				string verb = force ? "force " : "";
 				if (string.IsNullOrWhiteSpace(adminUserName))
-					Broadcast(string.Format("{0} was {1}banned for {2}", playerName, verb, reason.ToLower()));
+					Broadcast(string.Format("{0} was {1}banned for '{2}'", playerName, verb, reason.ToLower()));
 				else
-					Broadcast(string.Format("{0} {1}banned {2} for {3}", adminUserName, verb, playerName, reason.ToLower()));
+					Broadcast(string.Format("{0} {1}banned {2} for '{3}'", adminUserName, verb, playerName, reason.ToLower()));
 				return true;
 			}
 			return false;
@@ -693,7 +698,7 @@ namespace TShockAPI
             bool expirationExists = DateTime.TryParse(ban.Expiration, out exp);
 
             if (!string.IsNullOrWhiteSpace(ban.Expiration) && (expirationExists) &&
-                (DateTime.Now >= exp))
+                (DateTime.UtcNow >= exp))
             {
                 if (byName)
                 {
@@ -713,7 +718,7 @@ namespace TShockAPI
 		/// <summary>
 		/// Shows a file to the user.
 		/// </summary>
-		/// <param name="ply">int player</param>
+		/// <param name="ply">TSPlayer player</param>
 		/// <param name="file">string filename reletave to savedir</param>
 		public void ShowFileToUser(TSPlayer player, string file)
 		{
@@ -722,31 +727,28 @@ namespace TShockAPI
 			{
 				while ((foo = tr.ReadLine()) != null)
 				{
+					if (string.IsNullOrWhiteSpace(foo))
+					{
+						continue;
+					}
+
 					foo = foo.Replace("%map%", Main.worldName);
 					foo = foo.Replace("%players%", GetPlayers());
-					//foo = SanitizeString(foo);
-					if (foo.Substring(0, 1) == "%" && foo.Substring(12, 1) == "%") //Look for a beginning color code.
+					Regex reg = new Regex("%\\s*(?<r>\\d{1,3})\\s*,\\s*(?<g>\\d{1,3})\\s*,\\s*(?<b>\\d{1,3})\\s*%");
+					var matches = reg.Matches(foo);
+					Color c = Color.White;
+					foreach (Match match in matches)
 					{
-						string possibleColor = foo.Substring(0, 13);
-						foo = foo.Remove(0, 13);
-						float[] pC = {0, 0, 0};
-						possibleColor = possibleColor.Replace("%", "");
-						string[] pCc = possibleColor.Split(',');
-						if (pCc.Length == 3)
+						byte r, g, b;
+						if (byte.TryParse(match.Groups["r"].Value, out r) &&
+							byte.TryParse(match.Groups["g"].Value, out g) &&
+							byte.TryParse(match.Groups["b"].Value, out b))
 						{
-							try
-							{
-								player.SendMessage(foo, (byte) Convert.ToInt32(pCc[0]), (byte) Convert.ToInt32(pCc[1]),
-								                   (byte) Convert.ToInt32(pCc[2]));
-								continue;
-							}
-							catch (Exception e)
-							{
-								Log.Error(e.ToString());
-							}
+							c = new Color(r, g, b);
 						}
+						foo = foo.Remove(match.Index, match.Length);
 					}
-					player.SendMessage(foo);
+					player.SendMessage(foo, c);
 				}
 			}
 		}
@@ -879,6 +881,50 @@ namespace TShockAPI
 		}
 
 		/// <summary>
+		/// Attempts to parse a string as a timespan (_d_m_h_s).
+		/// </summary>
+		/// <param name="time">The time string.</param>
+		/// <param name="seconds">The seconds.</param>
+		/// <returns>Whether the string was parsed successfully.</returns>
+		public bool TryParseTime(string str, out int seconds)
+		{
+			seconds = 0;
+
+			var sb = new StringBuilder(3);
+			for (int i = 0; i < str.Length; i++)
+			{
+				if (char.IsDigit(str[i]) || (str[i] == '-' || str[i] == '+'))
+					sb.Append(str[i]);
+				else
+				{
+					int num;
+					if (!int.TryParse(sb.ToString(), out num))
+						return false;
+					
+					sb.Clear();
+					switch (str[i])
+					{
+						case 's':
+							seconds += num;
+							break;
+						case 'm':
+							seconds += num * 60;
+							break;
+						case 'h':
+							seconds += num * 60 * 60;
+							break;
+						case 'd':
+							seconds += num * 60 * 60 * 24;
+							break;
+						default:
+							return false;
+					}
+				}
+			}
+			return true;
+		}
+
+		/// <summary>
 		/// Searches for a projectile by identity and owner
 		/// </summary>
 		/// <param name="identity">identity</param>
@@ -928,6 +974,48 @@ namespace TShockAPI
 				yield return new Point(regionArea.Left, regionArea.Top + y);
 				yield return new Point(regionArea.Right, regionArea.Top + y);
 			}
+		}
+
+		public int? EncodeColor(Color? color)
+		{
+			if (color == null)
+				return null;
+
+			return BitConverter.ToInt32(new[] { color.Value.R, color.Value.G, color.Value.B, color.Value.A }, 0);
+		}
+
+		public Color? DecodeColor(int? encodedColor)
+		{
+			if (encodedColor == null)
+				return null;
+
+			byte[] data = BitConverter.GetBytes(encodedColor.Value);
+			return new Color(data[0], data[1], data[2], data[3]);
+		}
+
+		public byte? EncodeBitsByte(BitsByte? bitsByte)
+		{
+			if (bitsByte == null)
+				return null;
+
+			byte result = 0;
+			for (int i = 0; i < 8; i++)
+				if (bitsByte.Value[i])
+					result |= (byte)(1 << i);
+
+			return result;
+		}
+
+		public BitsByte? DecodeBitsByte(int? encodedBitsByte)
+		{
+			if (encodedBitsByte == null)
+				return null;
+
+			BitsByte result = new BitsByte();
+			for (int i = 0; i < 8; i++)
+				result[i] = (encodedBitsByte & 1 << i) != 0;
+
+			return result;
 		}
 	}
 }

@@ -182,6 +182,12 @@ namespace TShockAPI
 				{
 					buffers[socket.whoAmI].AddRange(ms.ToArray());
 				}
+
+				if (TShock.Config.EnableMaxBytesInBuffer && buffers[socket.whoAmI].Count > TShock.Config.MaxBytesInBuffer)
+				{
+					buffers[socket.whoAmI].Clear();
+					socket.kill = true;
+				}
 			}
 		}
 
@@ -207,6 +213,7 @@ namespace TShockAPI
                 switch ((uint)e.ErrorCode)
                 {
                     case 0x80004005:
+					case 10053:
                         break;
                     default:
                         Log.Warn(e.ToString());
